@@ -11,7 +11,7 @@ import time
 import copy
 import data_utils
 
-def fkl( angles, parent, offset, rotInd, expmapInd ):
+def fkl( angles, parent, offset, expmapInd ):
   """
   Convert joint angles and bone lenghts into the 3d points of a person.
   Based on expmap2xyz.m, available at
@@ -35,17 +35,10 @@ def fkl( angles, parent, offset, rotInd, expmapInd ):
 
   for i in np.arange( njoints ):
 
-    if not rotInd[i] : # If the list is empty
-      xangle, yangle, zangle = 0, 0, 0
-    else:
-      xangle = angles[ rotInd[i][0]-1 ]
-      yangle = angles[ rotInd[i][1]-1 ]
-      zangle = angles[ rotInd[i][2]-1 ]
-
     r = angles[ expmapInd[i] ]
 
     thisRotation = data_utils.expmap2rotmat(r)
-    thisPosition = np.array([xangle, yangle, zangle])
+    thisPosition = np.array([0, 0, 0])
 
     if parent[i] == -1: # Root node
       xyzStruct[i]['rotation'] = thisRotation
@@ -116,47 +109,47 @@ def _some_variables():
   offset = np.array([0.000000,0.000000,0.000000,-132.948591,0.000000,0.000000,0.000000,-442.894612,0.000000,0.000000,-454.206447,0.000000,0.000000,0.000000,162.767078,0.000000,0.000000,74.999437,132.948826,0.000000,0.000000,0.000000,-442.894413,0.000000,0.000000,-454.206590,0.000000,0.000000,0.000000,162.767426,0.000000,0.000000,74.999948,0.000000,0.100000,0.000000,0.000000,233.383263,0.000000,0.000000,257.077681,0.000000,0.000000,121.134938,0.000000,0.000000,115.002227,0.000000,0.000000,257.077681,0.000000,0.000000,151.034226,0.000000,0.000000,278.882773,0.000000,0.000000,251.733451,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,99.999627,0.000000,100.000188,0.000000,0.000000,0.000000,0.000000,0.000000,257.077681,0.000000,0.000000,151.031437,0.000000,0.000000,278.892924,0.000000,0.000000,251.728680,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,99.999888,0.000000,137.499922,0.000000,0.000000,0.000000,0.000000])
   offset = offset.reshape(-1,3)
 
-  rotInd = [[5, 6, 4],
-            [8, 9, 7],
-            [11, 12, 10],
-            [14, 15, 13],
-            [17, 18, 16],
-            [],
-            [20, 21, 19],
-            [23, 24, 22],
-            [26, 27, 25],
-            [29, 30, 28],
-            [],
-            [32, 33, 31],
-            [35, 36, 34],
-            [38, 39, 37],
-            [41, 42, 40],
-            [],
-            [44, 45, 43],
-            [47, 48, 46],
-            [50, 51, 49],
-            [53, 54, 52],
-            [56, 57, 55],
-            [],
-            [59, 60, 58],
-            [],
-            [62, 63, 61],
-            [65, 66, 64],
-            [68, 69, 67],
-            [71, 72, 70],
-            [74, 75, 73],
-            [],
-            [77, 78, 76],
-            []]
+  # rotInd = [[5, 6, 4],
+  #           [8, 9, 7],
+  #           [11, 12, 10],
+  #           [14, 15, 13],
+  #           [17, 18, 16],
+  #           [],
+  #           [20, 21, 19],
+  #           [23, 24, 22],
+  #           [26, 27, 25],
+  #           [29, 30, 28],
+  #           [],
+  #           [32, 33, 31],
+  #           [35, 36, 34],
+  #           [38, 39, 37],
+  #           [41, 42, 40],
+  #           [],
+  #           [44, 45, 43],
+  #           [47, 48, 46],
+  #           [50, 51, 49],
+  #           [53, 54, 52],
+  #           [56, 57, 55],
+  #           [],
+  #           [59, 60, 58],
+  #           [],
+  #           [62, 63, 61],
+  #           [65, 66, 64],
+  #           [68, 69, 67],
+  #           [71, 72, 70],
+  #           [74, 75, 73],
+  #           [],
+  #           [77, 78, 76],
+  #           []]
 
   expmapInd = np.split(np.arange(4,100)-1,32)
 
-  return parent, offset, rotInd, expmapInd
+  return parent, offset, expmapInd
 
 def main():
 
   # Load all the data
-  parent, offset, rotInd, expmapInd = _some_variables()
+  parent, offset, expmapInd = _some_variables()
 
   # numpy implementation
   with h5py.File( 'samples.h5', 'r' ) as h5f:
@@ -173,9 +166,9 @@ def main():
   # Compute 3d points for each frame
   xyz_gt, xyz_pred = np.zeros((nframes_gt, 96)), np.zeros((nframes_pred, 96))
   for i in range( nframes_gt ):
-    xyz_gt[i,:] = fkl( expmap_gt[i,:], parent, offset, rotInd, expmapInd )
+    xyz_gt[i,:] = fkl( expmap_gt[i,:], parent, offset, expmapInd )
   for i in range( nframes_pred ):
-    xyz_pred[i,:] = fkl( expmap_pred[i,:], parent, offset, rotInd, expmapInd )
+    xyz_pred[i,:] = fkl( expmap_pred[i,:], parent, offset, expmapInd )
 
   # === Plot and animate ===
   fig = plt.figure()
